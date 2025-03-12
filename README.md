@@ -359,6 +359,40 @@ class Decoder(nn.Module):
         output = self.linear(trg)
         return output
 ```
+<br>
+
+```python
+def generate_src_mask(src, pad_token=0):
+    """
+    生成源序列的 mask，屏蔽填充的部分。
+
+    参数:
+    - src: (batch_size, src_len) 的张量，表示输入序列。
+    - pad_token: 填充值（默认是 0）。
+
+    返回:
+    - mask: (batch_size, 1, 1, src_len) 的张量，在填充位置为 False，其他为 True。
+    """
+    mask = (src != pad_token)  # 生成 (batch_size, src_len) 的布尔 mask
+    return mask.unsqueeze(1).unsqueeze(2)  # 形状变为 (batch_size, 1, 1, src_len)
+
+   """
+   # 示例 batch
+   src = torch.tensor([
+       [101, 102, 0, 0],   # 句子 1
+       [201, 202, 203, 204],  # 句子 2
+       [301, 0, 0, 0]  # 句子 3
+   ])
+   
+   src_mask = generate_src_mask(src)
+   print(src_mask)
+   """
+
+def generate_trg_mask(seq_len):
+    """生成目标序列的 mask，防止看到未来的 token"""
+    return torch.tril(torch.ones(seq_len, seq_len)).bool()  # 下三角矩阵
+```
+
 <br><br>
 
 ## 2. Experiments
