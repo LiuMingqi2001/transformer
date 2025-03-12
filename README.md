@@ -77,6 +77,11 @@ class MultiHeadAttention(nn.Module):
         self.w_concat = nn.Linear(d_model, d_model)
 
     def forward(self, q, k, v, mask=None):
+        # w_q, w_k, w_v 通过 Linear 变换 q, k, v，投影到 d_model 维度。
+        # split() 将 d_model 拆分为 n_head 份，每份 d_tensor = d_model / n_head。
+        # attention() 计算 缩放点积注意力，得到 n_head 个 d_tensor 维度的 out。
+        # concat() 逆向合并 n_head 维度，使 out 变回 d_model 维度。
+        # w_concat 是最后的 Linear 层，保证 MultiHeadAttention 的输出维度仍然是 d_model。
         # 1. dot product with weight matrices
         q, k, v = self.w_q(q), self.w_k(k), self.w_v(v)
 
@@ -121,6 +126,8 @@ class MultiHeadAttention(nn.Module):
         d_model = head * d_tensor
 
         tensor = tensor.transpose(1, 2).contiguous().view(batch_size, length, d_model)
+        # PyTorch 允许 非连续（non-contiguous）存储 的张量，例如在 .transpose()、.permute() 等操作后，张量可能会 改变索引顺序，而不会改变底层数据存储。
+        # 如果张量的 内存不是连续的，则不能直接使用 .view() 来改变形状，这时就需要 .contiguous() 重新分配内存，使数据存储变为连续的。
         return tensor
 ```
 <br><br>
